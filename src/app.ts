@@ -1,19 +1,19 @@
-const fs = require("fs");
-const yaml = require("js-yaml");
-const path = require('path');
-const $RefParser = require("json-schema-ref-parser");
-const { execSync } = require("child_process");
-const Ajv = require("ajv");
+import fs from "fs";
+import yaml from "js-yaml";
+import path from "path";
+import $RefParser from "json-schema-ref-parser";
+import { execSync } from "child_process";
+import Ajv from "ajv";
 const ajv = new Ajv({
   allErrors: true,
   strict: "log",
 });
-const addFormats = require("ajv-formats");
-ajv.addFormat("phone", "")
+import addFormats from "ajv-formats";
+ajv.addFormat("phone", "");
 addFormats(ajv);
 require("ajv-errors")(ajv);
-require("dotenv").config()
-const process = require("process");
+require("dotenv").config();
+import process from "process";
 
 const args = process.argv.slice(2);
 // var example_set = args[0]
@@ -22,15 +22,15 @@ var base_yaml = "../api/components/beckn_yaml.yaml"; //args[0];
 var example_yaml = "../api/components/index.yaml"; //args[1];
 var outputPath = "../api/build/build.yaml";
 var uiPath = "../ui/build.js";
-var docs = ""
+var docs = "";
 // const outputPath = `./build.yaml`;
 // const unresolvedFilePath = `https://raw.githubusercontent.com/beckn/protocol-specifications/master/api/transaction/components/index.yaml`
 const tempPath = `./temp.yaml`;
 // add featureui docs
 
-const { buildAttribiutes } = require('./build-attributes.js')
-const { buildErrorCodes } = require('./build-error-code.js')
-const { buildTlc } = require('./build-tlc.js')
+import { buildAttribiutes } from "./build-attributes";
+import { buildErrorCodes } from "./build-error-code";
+import { buildTlc } from "./build-tlc";
 
 const SKIP_VALIDATION = {
   flows: process.env.flows_validation,
@@ -38,26 +38,26 @@ const SKIP_VALIDATION = {
   enums: process.env.enums_validation,
   tags: process.env.tags_enums_validation,
   attributes: process.env.attributes_enums_validation,
-  exampleAttributes: process.env.exampleAttributes_enums_validation
+  exampleAttributes: process.env.exampleAttributes_enums_validation,
 };
 
 const BUILD = {
   attributes: "attributes",
   error: "errorCode",
   tlc: "tlc",
-  checkAttributes: "checkAttributes"
+  checkAttributes: "checkAttributes",
 };
 
-async function baseYMLFile(file) {
+async function baseYMLFile(file: string) {
   try {
-    const schema = await $RefParser.dereference(file);
+    const schema = await $RefParser.default.dereference(file);
     return schema;
   } catch (error) {
     console.error("Error parsing schema:", error);
   }
 }
 
-async function validateSchema(schema, data) {
+async function validateSchema(schema: any, data: Record<string, any>) {
   const validate = ajv.compile(schema);
   const valid = validate(data?.value);
   if (!valid) {
@@ -67,8 +67,8 @@ async function validateSchema(schema, data) {
   return false;
 }
 
-async function validateFlows(flows, schemaMap) {
-    let hasTrueResult = false; // Flag variable
+async function validateFlows(flows: any, schemaMap: any) {
+  let hasTrueResult = false; // Flag variable
   for (const flowItem of flows) {
     const { steps } = flowItem;
     if (steps && steps?.length) {
@@ -88,8 +88,8 @@ async function validateFlows(flows, schemaMap) {
   }
 }
 
-async function validateExamples(exampleSets, schemaMap) {
-    let hasTrueResult = false; // Flag variable
+async function validateExamples(exampleSets: any, schemaMap: any) {
+  let hasTrueResult = false; // Flag variable
   for (const example of Object.keys(exampleSets)) {
     for (const api of Object.keys(schemaMap)) {
       const exampleList = exampleSets[example].example_set[api]?.examples;
@@ -113,15 +113,17 @@ async function validateExamples(exampleSets, schemaMap) {
 }
 
 async function matchKeyType(
-  currentAttrib,
-  currentExamplePos,
-  currentSchemaPos,
-  logObject
+  currentAttrib: any,
+  currentExamplePos: any,
+  currentSchemaPos: any,
+  logObject: any
 ) {
   const exampleArray = currentExamplePos[currentAttrib];
   const schemaType = currentSchemaPos[currentAttrib]?.type;
   const allOfType = currentSchemaPos[currentAttrib]?.allOf?.[0]?.type;
-  const itemType = currentSchemaPos[currentAttrib]?.items?.allOf?.[0]?.type || currentSchemaPos[currentAttrib]?.items?.type;
+  const itemType =
+    currentSchemaPos[currentAttrib]?.items?.allOf?.[0]?.type ||
+    currentSchemaPos[currentAttrib]?.items?.type;
 
   for (let i = 0; i < exampleArray?.length; i++) {
     const checkEnum = exampleArray[i];
@@ -139,7 +141,11 @@ async function matchKeyType(
   }
 }
 
-async function checkObjectKeys(currentExamplePos, currentSchemaPos, logObject) {
+async function checkObjectKeys(
+  currentExamplePos: any,
+  currentSchemaPos: any,
+  logObject: any
+) {
   for (const currentAttrib of Object.keys(currentExamplePos)) {
     const currentExample = currentExamplePos[currentAttrib];
     const currentSchema = currentSchemaPos[currentAttrib];
@@ -177,9 +183,9 @@ async function checkObjectKeys(currentExamplePos, currentSchemaPos, logObject) {
   }
 }
 
-async function validateEnumsTags(exampleEnums, schemaMap) {
-  for (const example of Object.keys(exampleEnums)) {
-    const currentExample = exampleEnums[example];
+async function validateEnumsTags(exampleEnum: any, schemaMap: any) {
+  for (const example of Object.keys(exampleEnum)) {
+    const currentExample = exampleEnum[example];
     const currentSchema = schemaMap[example];
 
     //context & message loop
@@ -194,7 +200,11 @@ async function validateEnumsTags(exampleEnums, schemaMap) {
   }
 }
 
-async function traverseTags(currentTagValue, schemaForTraversal, logObject) {
+async function traverseTags(
+  currentTagValue: any,
+  schemaForTraversal: any,
+  logObject: any
+) {
   for (const currentTagKey of Object.keys(currentTagValue)) {
     const currentTag = currentTagValue[currentTagKey];
     const schemaType = schemaForTraversal[currentTagKey];
@@ -217,7 +227,7 @@ async function traverseTags(currentTagValue, schemaForTraversal, logObject) {
   }
 }
 
-async function validateTags(tags, schema,isAttribute) {
+async function validateTags(tags: any, schema: any, isAttribute?: any) {
   for (const tag of Object.keys(tags)) {
     const currentTag = tags[tag];
     const currentSchema = schema[tag]?.properties;
@@ -226,27 +236,36 @@ async function validateTags(tags, schema,isAttribute) {
     for (const tagItem of Object.keys(currentTag)) {
       const currentTagValue = currentTag[tagItem];
       let schemaForTraversal;
-            if (currentSchema[tagItem]?.type === "object") {
+      if (currentSchema[tagItem]?.type === "object") {
         schemaForTraversal = currentSchema[tagItem]?.properties;
-      }//for validating attribute contexts
-      else if(currentSchema[tagItem]?.allOf[0] && isAttribute){
+      } //for validating attribute contexts
+      else if (currentSchema[tagItem]?.allOf[0] && isAttribute) {
         schemaForTraversal = currentSchema[tagItem]?.allOf[0]?.properties;
       }
       const logObject = `${isAttribute}/${tag}/${tagItem}/`;
-      if(isAttribute) await traverseAttributes(currentTagValue, schemaForTraversal, logObject);
+      if (isAttribute)
+        await traverseAttributes(
+          currentTagValue,
+          schemaForTraversal,
+          logObject
+        );
       else await traverseTags(currentTagValue, schemaForTraversal, logObject);
     }
   }
 }
 
-async function traverseAttributes(currentAttributeValue, schemaForTraversal, logObject) {
+async function traverseAttributes(
+  currentAttributeValue: any,
+  schemaForTraversal: any,
+  logObject: any
+) {
   for (const currentAttributeKey of Object.keys(currentAttributeValue)) {
     const currentAttr = currentAttributeValue[currentAttributeKey];
     const schemaType = schemaForTraversal[currentAttributeKey];
 
-        //&& 'type' in currentAttr && 'owner' in currentAttr && 'usage' in currentAttr && 'description' in currentAttr
-    if ('required' in currentAttr ) {
-      continue ;
+    //&& 'type' in currentAttr && 'owner' in currentAttr && 'usage' in currentAttr && 'description' in currentAttr
+    if ("required" in currentAttr) {
+      continue;
     }
     if (schemaType) {
       if (Array.isArray(currentAttr)) {
@@ -262,35 +281,46 @@ async function traverseAttributes(currentAttributeValue, schemaForTraversal, log
         await traverseAttributes(currentAttr, schema, logObject);
       }
     } else {
-      throw Error(`[Attribute], Key not found: ${currentAttributeKey} in ${logObject}`);
+      throw Error(
+        `[Attribute], Key not found: ${currentAttributeKey} in ${logObject}`
+      );
     }
   }
 }
 
-async function validateAttributes(attribute, schemaMap) {
+async function validateAttributes(attribute: any, schemaMap: any) {
   for (const example of Object.keys(attribute)) {
-      validateTags(attribute[example].attribute_set,schemaMap,example);
+    validateTags(attribute[example].attribute_set, schemaMap, example);
   }
-  }
-async function getSwaggerYaml(example_set, outputPath) {
+}
+async function getSwaggerYaml(example_set: any, outputPath: string) {
   try {
-    const schema = await baseYMLFile(example_yaml);
-    const baseYAML = await baseYMLFile(base_yaml);
-    const { flows, examples: exampleSets, enum: enums, tags,attributes } = schema || [];
+    const schema = (await baseYMLFile(example_yaml)) as any;
+    const baseYAML = (await baseYMLFile(base_yaml)) as any;
+    if (schema === undefined || baseYAML === undefined) {
+      throw new Error("Error parsing schema");
+    }
+    const {
+      flows,
+      examples: exampleSets,
+      enum: enums,
+      tags,
+      attributes,
+    } = schema || [];
     const { paths } = baseYAML;
-    let hasTrueResult = false; // Flag variable
-    let schemaMap = {};
-    
+    let hasTrueResult: undefined | boolean = false; // Flag variable
+    let schemaMap: any = {};
+
     if (process.argv.includes(BUILD.attributes)) {
-      await buildAttribiutes()
+      await buildAttribiutes();
     }
 
     if (process.argv.includes(BUILD.error)) {
-      await buildErrorCodes()
+      await buildErrorCodes();
     }
 
     if (process.argv.includes(BUILD.tlc)) {
-      await buildTlc()
+      await buildTlc();
     }
 
     for (const path in paths) {
@@ -299,41 +329,41 @@ async function getSwaggerYaml(example_set, outputPath) {
       schemaMap[path.substring(1)] = pathSchema;
     }
 
-    if (SKIP_VALIDATION.flows==="true") {
-      console.log("Validating Flows")
+    if (SKIP_VALIDATION.flows === "true") {
+      console.log("Validating Flows");
       hasTrueResult = await validateFlows(flows, schemaMap);
     }
-    if ((SKIP_VALIDATION.examples ==="true") && !hasTrueResult) {
-      console.log("Validating Examples")
+    if (SKIP_VALIDATION.examples === "true" && !hasTrueResult) {
+      console.log("Validating Examples");
       hasTrueResult = await validateExamples(exampleSets, schemaMap);
     }
 
     //move to separate files
-    if ((SKIP_VALIDATION.enums==="true") && !hasTrueResult) {
-      console.log("Validating Enums")
-      hasTrueResult = await validateEnumsTags(enums, schemaMap);
+    if (SKIP_VALIDATION.enums === "true" && !hasTrueResult) {
+      console.log("Validating Enums");
+      await validateEnumsTags(enums, schemaMap);
     }
-    if ((SKIP_VALIDATION.tags==="true") && !hasTrueResult) {
-      console.log("Validating Tags")
+    if (SKIP_VALIDATION.tags === "true" && !hasTrueResult) {
+      console.log("Validating Tags");
 
-      hasTrueResult = await validateTags(tags, schemaMap);
-    }
-
-    if ((SKIP_VALIDATION.attributes==="true") && !hasTrueResult) {
-      console.log("Validating Attributes")
-
-      hasTrueResult = await validateAttributes(attributes, schemaMap);
+      await validateTags(tags, schemaMap);
     }
 
-    if ((SKIP_VALIDATION.exampleAttributes==="true") && !hasTrueResult) {
-      console.log("Validating ExampleAttributes")
+    if (SKIP_VALIDATION.attributes === "true" && !hasTrueResult) {
+      console.log("Validating Attributes");
 
-      await validateExamplesAttributes(exampleSets, attributes)
+      await validateAttributes(attributes, schemaMap);
     }
 
-    if ((BUILD.checkAttributes==="true") && !hasTrueResult) {
-      console.log("Validating Attributes")
-        await checkAttributes(exampleSets, attributes)
+    if (SKIP_VALIDATION.exampleAttributes === "true" && !hasTrueResult) {
+      console.log("Validating ExampleAttributes");
+
+      await validateExamplesAttributes(exampleSets, attributes);
+    }
+
+    if (BUILD.checkAttributes === "true" && !hasTrueResult) {
+      console.log("Validating Attributes");
+      await checkAttributes(exampleSets, attributes);
     }
     if (hasTrueResult) return;
 
@@ -343,14 +373,15 @@ async function getSwaggerYaml(example_set, outputPath) {
       examples = examples[example_set];
       buildSwagger(base_yaml, tempPath);
       const spec_file = fs.readFileSync(tempPath);
-      const spec = yaml.load(spec_file);
+      const spec_file_string = spec_file.toString();
+      const spec = yaml.load(spec_file_string);
       addEnumTag(spec, schema);
-      const result =  await GenerateYaml(spec, examples, outputPath);
+      const result = await GenerateYaml(spec, examples, outputPath);
       cleanup();
-      if(result){
-        return true
+      if (result) {
+        return true;
       }
-        return false
+      return false;
     }
   } catch (error) {
     console.log("Error generating build file", error);
@@ -358,8 +389,8 @@ async function getSwaggerYaml(example_set, outputPath) {
   }
 }
 
-async function validateObject(example, attribute, endPoint) {
-  let mandatoryRequiredKeys = [];
+async function validateObject(example: any, attribute: any, endPoint: any) {
+  let mandatoryRequiredKeys: any[] = [];
 
   findMandatoryRequiredKeys(attribute, mandatoryRequiredKeys);
   checkKeysExistence(example, mandatoryRequiredKeys, endPoint);
@@ -367,8 +398,8 @@ async function validateObject(example, attribute, endPoint) {
   return true;
 }
 
-function handleError(keys, endPoint) {
-  keys = keys.reduceRight((total,key)=>[key["key"],...total],[])
+function handleError(keys: any, endPoint: string) {
+  keys = keys.reduceRight((total: any, key: any) => [key["key"], ...total], []);
   throw new Error(
     `Key path ${keys.join(
       "."
@@ -376,9 +407,13 @@ function handleError(keys, endPoint) {
   );
 }
 
-const checkKeysExistence = (example, mandatoryRequiredKeys, endPoint) => {
+const checkKeysExistence = (
+  example: any,
+  mandatoryRequiredKeys: any,
+  endPoint: string
+) => {
   if (example === null || typeof example !== "object") {
-    handleError(`Invalid example object at ${endPoint}`);
+    handleError(`Invalid example object at ${endPoint}`, endPoint);
   }
 
   outerLoop: for (let keys of mandatoryRequiredKeys) {
@@ -392,8 +427,8 @@ const checkKeysExistence = (example, mandatoryRequiredKeys, endPoint) => {
     // }
 
     for (let key of keys) {
-      var required= key["required"]
-      key = key["key"]
+      var required = key["required"];
+      key = key["key"];
       if (Array.isArray(currentObj)) {
         isArray = true;
         currentKeys = keys.slice(currentIndex);
@@ -401,8 +436,8 @@ const checkKeysExistence = (example, mandatoryRequiredKeys, endPoint) => {
       }
 
       if (!currentObj.hasOwnProperty(key)) {
-        if(required==="optional"){
-          continue outerLoop
+        if (required === "optional") {
+          continue outerLoop;
         }
         handleError(keys, endPoint);
       }
@@ -412,7 +447,7 @@ const checkKeysExistence = (example, mandatoryRequiredKeys, endPoint) => {
     }
 
     if (isArray) {
-      if(keys.includes("tags")){
+      if (keys.includes("tags")) {
         continue;
       }
       handleIfObjectIsArray(currentKeys, currentObj, endPoint);
@@ -420,7 +455,7 @@ const checkKeysExistence = (example, mandatoryRequiredKeys, endPoint) => {
   }
 };
 
-function handleIfObjectIsArray(keys, currentObj, endPoint) {
+function handleIfObjectIsArray(keys: any, currentObj: any, endPoint: any) {
   if (Array.isArray(currentObj)) {
     for (let obj of currentObj) {
       if (typeof obj === "object") {
@@ -432,19 +467,34 @@ function handleIfObjectIsArray(keys, currentObj, endPoint) {
   }
 }
 
-function findMandatoryRequiredKeys(obj, result, parentKeys = []) {
+function findMandatoryRequiredKeys(
+  obj: any,
+  result: any,
+  parentKeys: any = []
+) {
   //&& obj[key] === "string"
   for (let key in obj) {
     if (obj.hasOwnProperty(key)) {
       if (typeof obj[key] === "object") {
-
-        findMandatoryRequiredKeys(obj[key], result, [...parentKeys, {key:key,required: typeof (obj[key]["required"]) === "string" && obj[key]["required"].toLowerCase()}]);
-      } 
-      else if (key === "required" && ["mandatory","optional"].includes(obj[key]?.toLowerCase())) {
-        const lastIndex = parentKeys.length-1
-        if(parentKeys[lastIndex]["key"]==="_description"){ // if last key is _description then return parent key
-          parentKeys[lastIndex-1]["required"]= parentKeys[lastIndex]["required"]
-          parentKeys.pop()
+        findMandatoryRequiredKeys(obj[key], result, [
+          ...parentKeys,
+          {
+            key: key,
+            required:
+              typeof obj[key]["required"] === "string" &&
+              obj[key]["required"].toLowerCase(),
+          },
+        ]);
+      } else if (
+        key === "required" &&
+        ["mandatory", "optional"].includes(obj[key]?.toLowerCase())
+      ) {
+        const lastIndex = parentKeys.length - 1;
+        if (parentKeys[lastIndex]["key"] === "_description") {
+          // if last key is _description then return parent key
+          parentKeys[lastIndex - 1]["required"] =
+            parentKeys[lastIndex]["required"];
+          parentKeys.pop();
         }
         result.push([...parentKeys]);
       }
@@ -452,44 +502,59 @@ function findMandatoryRequiredKeys(obj, result, parentKeys = []) {
   }
 }
 
-async function iterateTags( examplesTag, attributesTag, example_sets) {
-    //un-comment for error trace
-    //console.log('example_sets', example_sets)
-  
-    for (let i = 0; i < examplesTag?.length; i++) {
-      const exampleItem = examplesTag[i];
-      const attributeItem = attributesTag;
-      const { list } = exampleItem;
-      //console.log('dlasjhdlasldjkalsdklahdlahsd', attributeItem, attributesTag)
-      if(attributeItem?.hasOwnProperty(exampleItem?.descriptor?.code)){
-        if (Array.isArray(list)) {
-          await iterateTags(list, attributeItem[exampleItem?.descriptor?.code].list, example_sets)
-        }
-      }else{
-        console.log(`Tag not matched  ${ JSON.stringify(exampleItem?.descriptor)} in ${example_sets}`);
+async function iterateTags(
+  examplesTag: any,
+  attributesTag: any,
+  example_sets: any
+) {
+  //un-comment for error trace
+  //console.log('example_sets', example_sets)
+
+  for (let i = 0; i < examplesTag?.length; i++) {
+    const exampleItem = examplesTag[i];
+    const attributeItem = attributesTag;
+    const { list } = exampleItem;
+    //console.log('dlasjhdlasldjkalsdklahdlahsd', attributeItem, attributesTag)
+    if (attributeItem?.hasOwnProperty(exampleItem?.descriptor?.code)) {
+      if (Array.isArray(list)) {
+        await iterateTags(
+          list,
+          attributeItem[exampleItem?.descriptor?.code].list,
+          example_sets
+        );
       }
+    } else {
+      console.log(
+        `Tag not matched  ${JSON.stringify(
+          exampleItem?.descriptor
+        )} in ${example_sets}`
+      );
     }
   }
-  
-const iterateObject = (example, mandatoryRequiredKeys, endPoint) => { 
-  for ( const attribs of Object.keys(attrib)){
-    //console.log('attribs', attribs, attrib[attribs])
-    if( typeof attrib[attribs] === "object" && attrib[attribs]?.required){
-      if(getExample[attribs]){
-        console.log('value against attribute found', attribs);
-      }
-    }else{
-      if(typeof attrib[attribs] === "object" && !attrib[attribs]?.required){
-        if(typeof attrib[attribs]){
-          iterateObject()
-        }
-      }
-    }
 }
 
-}
+// const iterateObject = (
+//   example: any,
+//   mandatoryRequiredKeys: any,
+//   endPoint: any
+// ) => {
+//   for (const attribs of Object.keys(attrib)) {
+//     //console.log('attribs', attribs, attrib[attribs])
+//     if (typeof attrib[attribs] === "object" && attrib[attribs]?.required) {
+//       if (getExample[attribs]) {
+//         console.log("value against attribute found", attribs);
+//       }
+//     } else {
+//       if (typeof attrib[attribs] === "object" && !attrib[attribs]?.required) {
+//         if (typeof attrib[attribs]) {
+//           iterateObject();
+//         }
+//       }
+//     }
+//   }
+// };
 
-async function validateExamplesAttributes(exampleSets, attributes) {
+async function validateExamplesAttributes(exampleSets: any, attributes: any) {
   try {
     for (const exampleSet of Object.keys(exampleSets)) {
       //check if attributes found for particular example.
@@ -497,18 +562,20 @@ async function validateExamplesAttributes(exampleSets, attributes) {
         const { example_set } = exampleSets[exampleSet] || {};
         const { attribute_set } = attributes[exampleSet] || {};
         for (const example_sets of Object.keys(example_set)) {
-          const { examples } = example_set[example_sets] || []
+          const { examples } = example_set[example_sets] || [];
           for (const example of examples) {
-              //sending only matched examples=attribute set like search=search
-              if(attribute_set[example_sets]){
-                const currentAttribute = attribute_set[example_sets]
-                await validateObject(example?.value, currentAttribute, example_sets)
-              }else{
-                console.log(`attribute not found for ${example_sets}`)
-              }
-              
+            //sending only matched examples=attribute set like search=search
+            if (attribute_set[example_sets]) {
+              const currentAttribute = attribute_set[example_sets];
+              await validateObject(
+                example?.value,
+                currentAttribute,
+                example_sets
+              );
+            } else {
+              console.log(`attribute not found for ${example_sets}`);
+            }
           }
-          
         }
       }
     }
@@ -517,51 +584,53 @@ async function validateExamplesAttributes(exampleSets, attributes) {
   }
 }
 
-async function checkAttributes(exampleSets, attributes) {
-    //console.log('exampleSets', exampleSets, attributes)
-    try {
-      for (const exampleSet of Object.keys(exampleSets)) {
-      
-        if(attributes.hasOwnProperty(exampleSet)){
-          const { example_set } = exampleSets[exampleSet] || {};
-          const { attribute_set } = attributes[exampleSet] || {};
-          for (const example_sets of Object.keys(example_set)) {
-            const { examples } = example_set[example_sets] || []
-            for (const example of examples) {
-              //sending only matched examples=attribute set like search=search
-              if(attribute_set[example_sets]){
-                const currentAttribute = attribute_set[example_sets]
-                  // if(example_sets == "on_init")
-                await comapreObjects(example?.value, currentAttribute, example_sets)
-              }else{
-                console.log(`attribute not found for ${example_sets}`)
-              }
-              
+async function checkAttributes(exampleSets: any, attributes: any) {
+  //console.log('exampleSets', exampleSets, attributes)
+  try {
+    for (const exampleSet of Object.keys(exampleSets)) {
+      if (attributes.hasOwnProperty(exampleSet)) {
+        const { example_set } = exampleSets[exampleSet] || {};
+        const { attribute_set } = attributes[exampleSet] || {};
+        for (const example_sets of Object.keys(example_set)) {
+          const { examples } = example_set[example_sets] || [];
+          for (const example of examples) {
+            //sending only matched examples=attribute set like search=search
+            if (attribute_set[example_sets]) {
+              const currentAttribute = attribute_set[example_sets];
+              // if(example_sets == "on_init")
+              await comapreObjects(
+                example?.value,
+                currentAttribute,
+                example_sets
+              );
+            } else {
+              console.log(`attribute not found for ${example_sets}`);
+            }
           }
-          }
-        }else{
-          console.log(`example not found against attributes ${exampleSet}`)
         }
-              
+      } else {
+        console.log(`example not found against attributes ${exampleSet}`);
       }
     }
-     catch(error){
-      console.log(`Error checking attributes, ${error}`)
-     } 
+  } catch (error) {
+    console.log(`Error checking attributes, ${error}`);
+  }
 }
 
-async function comapreObjects(examples, attributes, example_sets) {
+async function comapreObjects(
+  examples: any,
+  attributes: any,
+  example_sets: any
+) {
   for (const key in examples) {
-    
     //un-commnet this if key is not found
     //console.log('key', key, examples[key])
-    if(key == "tags"){
-        if (Array.isArray(examples[key])) {
-          //console.log('examples[key]', examples[key], attributes[key], attributes)
-          await iterateTags(examples[key], attributes[key], example_sets);
-        }
-      }else{
-
+    if (key == "tags") {
+      if (Array.isArray(examples[key])) {
+        //console.log('examples[key]', examples[key], attributes[key], attributes)
+        await iterateTags(examples[key], attributes[key], example_sets);
+      }
+    } else {
       if (
         typeof examples[key] === "object" &&
         typeof attributes[key] === "object"
@@ -584,7 +653,6 @@ async function comapreObjects(examples, attributes, example_sets) {
         } else {
           await comapreObjects(examples[key], attributes[key], example_sets);
         }
-
       } else if (!attributes.hasOwnProperty(key)) {
         console.log(`keys not found, ${key} in  ${example_sets}`);
       }
@@ -600,7 +668,7 @@ function cleanup() {
   }
 }
 
-function writeSchemaMap(folder, schemaMap) {
+function writeSchemaMap(folder: any, schemaMap: any) {
   for (const api of Object.keys(schemaMap)) {
     var schema_yaml = folder + "/" + api + ".yaml";
     var schmea = yaml.dump(schemaMap[api]);
@@ -608,7 +676,7 @@ function writeSchemaMap(folder, schemaMap) {
   }
 }
 
-function buildSwagger(inPath, outPath) {
+function buildSwagger(inPath: string, outPath: string) {
   try {
     const command = `swagger-cli bundle ${inPath} --outfile ${outPath} -t yaml`;
     execSync(command, { stdio: "inherit" });
@@ -621,7 +689,7 @@ function buildSwagger(inPath, outPath) {
   }
 }
 
-function addEnumTag(base, layer) {
+function addEnumTag(base: any, layer: any) {
   base["x-enum"] = layer["enum"];
   base["x-tags"] = layer["tags"];
   base["x-flows"] = layer["flows"];
@@ -629,93 +697,95 @@ function addEnumTag(base, layer) {
   base["x-attributes"] = layer["attributes"];
   base["x-errorcodes"] = layer["error_codes"];
   base["x-tlc"] = layer["tlc"];
-  base["x-featureui"] = layer["feature-ui"]
-  base["x-sandboxui"] = layer["sandbox-ui"]
-  base["x-testcasesui"] = layer["testcases-ui"]
-
+  base["x-featureui"] = layer["feature-ui"];
+  base["x-sandboxui"] = layer["sandbox-ui"];
+  base["x-testcasesui"] = layer["testcases-ui"];
 }
 
-async function GenerateYaml(base, layer, output_yaml) {
-    try{
-  const output = yaml.dump(base);
-  fs.writeFileSync(output_yaml, output, "utf8");
-  const baseData = base['x-examples'];
-  for (const examplesKey of Object.keys(baseData)) {
-    let {example_set:exampleSet} = baseData[examplesKey] || {}
-    delete exampleSet.form;
+async function GenerateYaml(base: any, layer: any, output_yaml: any) {
+  try {
+    const output = yaml.dump(base);
+    fs.writeFileSync(output_yaml, output, "utf8");
+    const baseData = base["x-examples"];
+    for (const examplesKey of Object.keys(baseData)) {
+      let { example_set: exampleSet } = baseData[examplesKey] || {};
+      delete exampleSet.form;
+    }
+    const jsonDump = "let build_spec = " + JSON.stringify(base);
+    await fs.writeFileSync(uiPath, jsonDump, "utf8");
+    return true;
+  } catch (err: any) {
+    console.log(err);
+    return false;
   }
-  const jsonDump = "let build_spec = " + JSON.stringify(base);
-  await fs.writeFileSync(uiPath, jsonDump, "utf8");
-  return true;
-    }
-    catch(err){
-        console.log(e);
-        return false;
-    }
 }
 
-function checkMDFiles(docs){
+function checkMDFiles(docs: string) {
   const filePath = docs;
-if(!fs.existsSync(path.join(filePath)))fs.mkdirSync(filePath) //create docs folder if not exists
+  if (!fs.existsSync(path.join(filePath))) fs.mkdirSync(filePath); //create docs folder if not exists
   const files = fs.readdirSync(filePath);
-  const markdownFiles=files.filter((file)=>file.endsWith(".md"))
- return markdownFiles
+  const markdownFiles = files.filter((file) => file.endsWith(".md"));
+  return markdownFiles;
 }
 
-function readfileWithYaml(docs){
-    const yamlFilePath = path.join(docs, '', 'index.yaml');
-    const yamlData = yaml.load(fs.readFileSync(yamlFilePath, 'utf8'));
-    return yamlData.filenames;
+function readfileWithYaml(docs: string) {
+  const yamlFilePath = path.join(docs, "", "index.yaml");
+  const yamlData = yaml.load(fs.readFileSync(yamlFilePath, "utf8")) as any;
+  return yamlData.filenames;
 }
 
+function compareFiles(docs: any) {
+  const mdFiles = checkMDFiles(docs);
+  const yamlFiles = readfileWithYaml(docs);
 
-function compareFiles (docs) {
-    const mdFiles = checkMDFiles(docs);
-    const yamlFiles = readfileWithYaml(docs);
-  
-    // Check if the arrays are equal
-    const isEqual = JSON.stringify(mdFiles) === JSON.stringify(yamlFiles);
-  
-    if (isEqual) {
-    } else {
-      throw new Error(`Files at docs/index.yaml doesn't exist`);
-    }
-  };
+  // Check if the arrays are equal
+  const isEqual = JSON.stringify(mdFiles) === JSON.stringify(yamlFiles);
 
-  function writeFilenamesToYaml (filenames,docs) {
-    // Create an array of YAML links
-    const yamlLinks = filenames.map(filename => `${filename}`);
-    const yamlData = { filenames: yamlLinks };
-    const yamlFilePath = path.join(docs, 'index.yaml');
-    // Convert the data to YAML format and write it to the file
-    const yamlString = yaml.dump(yamlData);
-    fs.writeFileSync(yamlFilePath, yamlString, 'utf8');
-  };
-    
-  async function ondc_build(beckn_yaml,index_yaml,build_yaml,build_js,docs) {
-    try {
-      for (const path of arguments){
-        if(!fs.existsSync(path)){
-          throw new Error("Please check path argument for "+ path)
-        }
-      }      
-       base_yaml = beckn_yaml
-       example_yaml = index_yaml
-       outputPath = build_yaml
-       uiPath = build_js
-       docs = docs
-      const markdownFiles = checkMDFiles(docs);
-      writeFilenamesToYaml(markdownFiles,docs);
-      compareFiles(docs);
-        const result = await getSwaggerYaml("example_set", outputPath);
-        if(!result){
-          return false
-        }
-        return true;
-    } catch (e) {
-      console.log(e);
-    }
+  if (isEqual) {
+  } else {
+    throw new Error(`Files at docs/index.yaml doesn't exist`);
   }
+}
 
-  module.exports = {ondc_build}
+function writeFilenamesToYaml(filenames: string[], docs: string) {
+  // Create an array of YAML links
+  const yamlLinks = filenames.map((filename) => `${filename}`);
+  const yamlData = { filenames: yamlLinks };
+  const yamlFilePath = path.join(docs, "index.yaml");
+  // Convert the data to YAML format and write it to the file
+  const yamlString = yaml.dump(yamlData);
+  fs.writeFileSync(yamlFilePath, yamlString, "utf8");
+}
 
+async function ondc_build(
+  beckn_yaml: any,
+  index_yaml: string,
+  build_yaml: string,
+  build_js: string,
+  docs: string
+) {
+  try {
+    for (const path of arguments) {
+      if (!fs.existsSync(path)) {
+        throw new Error("Please check path argument for " + path);
+      }
+    }
+    base_yaml = beckn_yaml;
+    example_yaml = index_yaml;
+    outputPath = build_yaml;
+    uiPath = build_js;
+    docs = docs;
+    const markdownFiles = checkMDFiles(docs);
+    writeFilenamesToYaml(markdownFiles, docs);
+    compareFiles(docs);
+    const result = await getSwaggerYaml("example_set", outputPath);
+    if (!result) {
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+module.exports = { ondc_build };

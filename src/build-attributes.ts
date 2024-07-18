@@ -1,13 +1,13 @@
 const xlsx = require("node-xlsx").default;
-const yaml = require("js-yaml");
-const fs = require("fs");
+import yaml from "js-yaml";
+import fs from "fs";
 
-async function buildAttribiutes() {
+export async function buildAttribiutes() {
   let attributes = {};
   const workSheetsFromBuffer = xlsx.parse(`../../metro_attributes.xlsx`);
   for (let i = 0; i < workSheetsFromBuffer.length; i++) {
     const array = workSheetsFromBuffer[i];
-    const filterArray = array.data.filter((subArr) => subArr.length > 0);
+    const filterArray = array.data.filter((subArr: any) => subArr.length > 0);
     const response = formObject(filterArray);
     const addArrtibuteName = {
       [array?.name]: response,
@@ -19,15 +19,15 @@ async function buildAttribiutes() {
     fs.writeFileSync(`./attributes/metro/index.yaml`, attributesYaml);
   }
 }
-function formObject(attributes) {
-  const result = {};
-  let dataValue = {};
-  attributes.slice(1).forEach((item) => {
+function formObject(attributes: any) {
+  const result: any = {};
+  let dataValue: any = {};
+  attributes.slice(1).forEach((item: any) => {
     const keys = item[0].split(".");
     let temp = result;
     const tempAtt = attributes[0].slice(1);
     const tempItem = item?.slice(1);
-    keys.forEach((key, index) => {
+    keys.forEach((key: any, index: number) => {
       if (!temp[key]) {
         if (index === keys.length - 1) {
           for (const [i, step] of tempAtt?.entries()) {
@@ -45,5 +45,4 @@ function formObject(attributes) {
   return result;
 }
 
-
-module.exports = { buildAttribiutes }
+module.exports = { buildAttribiutes };
